@@ -26,7 +26,13 @@ db = torndb.Connection(host='localhost', database='blog',
 # pprint.pprint(ret)
 
 
-ret = db.query("SELECT * FROM entries WHERE  author_id = %s", 1)
+# ret = db.query("SELECT * FROM entries WHERE  author_id = %s", 1)
+#
+# pprint.pprint(ret)
+
+
+ret = db.query("SELECT entries.*, authors.name as author_name, authors.email as author_email "
+               "FROM entries JOIN authors on entries.author_id=authors.id WHERE  author_id=%s", 1)
 
 pprint.pprint(ret)
 
