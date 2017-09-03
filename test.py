@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import pprint
 import time
+import pprint
 import torndb
 
 st = time.time()
