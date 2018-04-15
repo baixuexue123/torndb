@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import time
 import pprint
+import pymysql
+from sqlalchemy import create_engine, exc, inspect, text
+
 import torndb
 
 st = time.time()
+
 
 db = torndb.Connection(host='localhost', database='blog',
                        user='blog', password='blog')
