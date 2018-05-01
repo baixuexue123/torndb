@@ -1,9 +1,7 @@
-import os
 import time
 import logging
-from collections import OrderedDict
+import pprint
 from contextlib import contextmanager
-from inspect import isclass
 
 import pymysql
 
@@ -17,8 +15,9 @@ class Connection(object):
     We explicitly set the timezone to UTC and assume the character encoding to
     UTF-8 (can be changed) on all connections to avoid time zone and encoding errors.
     """
+
     def __init__(self, host, database, user=None, password=None,
-                 max_idle_time=7*3600, connect_timeout=3,
+                 max_idle_time=7 * 3600, connect_timeout=5,
                  time_zone="+0:00", charset="utf8", sql_mode="TRADITIONAL",
                  **kwargs):
 
@@ -69,6 +68,10 @@ class Connection(object):
     def __exit__(self, exc, val, traceback):
         self.close()
 
+    def __repr__(self):
+        return '<Connection(host={host}, db={db}, user={user})>'. \
+            format(host=self.host, db=self.database, user=self._db_args['user'])
+
     def close(self):
         """Closes this database connection."""
         if getattr(self, "_db", None) is not None:
@@ -101,7 +104,7 @@ class Connection(object):
             self._execute(cursor, query, parameters, kwparameters)
             column_names = [d[0] for d in cursor.description]
             for row in cursor:
-                yield Record(zip(column_names, row))
+                yield Row(zip(column_names, row))
         finally:
             cursor.close()
 
@@ -110,7 +113,7 @@ class Connection(object):
         with self._cursor() as cursor:
             self._execute(cursor, query, parameters, kwparameters)
             column_names = [d[0] for d in cursor.description]
-            return [Record(zip(column_names, row)) for row in cursor]
+            return [Row(zip(column_names, row)) for row in cursor]
 
     def get(self, query, *parameters, **kwparameters):
         """Returns the (singular) row returned by the given query.
@@ -165,8 +168,7 @@ class Connection(object):
         # you try to perform a query and it fails.  Protect against this
         # case by preemptively closing and reopening the connection
         # if it has been idle for too long (7 hours by default).
-        if self._db is None or \
-                (time.time() - self._last_use_time > self.max_idle_time):
+        if self._db is None or (time.time() - self._last_use_time > self.max_idle_time):
             self.reconnect()
         self._last_use_time = time.time()
 
@@ -182,6 +184,19 @@ class Connection(object):
             self.close()
             raise
 
+    @contextmanager
+    def transaction(self):
+        """A context manager for executing a transaction on this Database."""
+        self.autocommit(False)
+        self.begin()
+        try:
+            yield self
+            self.commit()
+        except:
+            self.rollback()
+        finally:
+            self.autocommit(True)
+
 
 def _reduce_datetimes(row):
     """Receives a row, converts datetimes to strings."""
@@ -194,8 +209,9 @@ def _reduce_datetimes(row):
     return tuple(row)
 
 
-class Record(dict):
+class Row(dict):
     """A dict that allows for object-like property access syntax."""
+
     def __getattr__(self, name):
         try:
             return self[name]
@@ -203,4 +219,4 @@ class Record(dict):
             raise AttributeError(name)
 
     def __repr__(self):
-        return '<Record {}>'.format(self.export('json')[1:-1])
+        return '<Row({})>'.format(pprint.pformat(self, indent=2))

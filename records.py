@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import os
 from collections import OrderedDict
 from contextlib import contextmanager
