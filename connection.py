@@ -84,6 +84,9 @@ class Connection(object):
         self._db = pymysql.connect(**self._db_args)
         self._db.autocommit(True)
 
+    def ping(self):
+        self._db.ping()
+
     def autocommit(self, value):
         self._db.autocommit(value)
 

@@ -5,9 +5,6 @@ import pymysql
 
 from .connection import Connection
 
-from mysql.connector import MySQLConnection
-from mysql.connector.pooling import MySQLConnectionPool
-
 CONNECTION_POOL_LOCK = threading.RLock()
 CNX_POOL_MAXSIZE = 32
 
@@ -18,10 +15,8 @@ class PoolError(pymysql.Error):
 
 class Pool(object):
 
-    def __init__(self, size=5, pool_reset_session=True, **kwargs):
-        self._pool_size = None
-        self._reset_session = pool_reset_session
-        self._set_pool_size(size)
+    def __init__(self, size=5, **kwargs):
+        self.size = size
         self._cnx_config = {}
         self._cnx_queue = queue.Queue(self._pool_size)
 
@@ -37,12 +32,8 @@ class Pool(object):
         """Return number of connections managed by the pool"""
         return self._pool_size
 
-    @property
-    def reset_session(self):
-        """Return whether to reset session"""
-        return self._reset_session
-
-    def _set_pool_size(self, size):
+    @size.setter
+    def size(self, size):
         if size <= 0 or size > CNX_POOL_MAXSIZE:
             raise AttributeError(
                 "Pool size should be higher than 0 and "
@@ -57,9 +48,10 @@ class Pool(object):
 
         with CONNECTION_POOL_LOCK:
             try:
-                test_cnx = Connection(**kwargs)
+                with Connection(**kwargs) as c:
+                    c.ping()
                 self._cnx_config = kwargs
-            except AttributeError as err:
+            except Exception as err:
                 raise PoolError("Connection configuration not valid: {0}".format(err))
 
     def _queue_connection(self, cnx):
