@@ -4,6 +4,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from inspect import isclass
 
+
 import tablib
 from docopt import docopt
 from sqlalchemy import create_engine, exc, inspect, text
