@@ -12,5 +12,5 @@ distutils.core.setup(
     author_email="python-tornado@googlegroups.com",
     url="https://github.com/bdarnell/torndb",
     license="http://www.apache.org/licenses/LICENSE-2.0",
-    description="A lightweight wrapper around PyMySQL.",
+    description="A lightweight wrapper around MySQL DB-API.",
 )
