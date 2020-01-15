@@ -2,7 +2,7 @@
 
 import distutils.core
 
-version = "0.4"
+version = "0.5"
 
 distutils.core.setup(
     name="torndb",

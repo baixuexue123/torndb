@@ -1,21 +1,21 @@
 import threading
 import queue
 
-import pymysql
+import MySQLdb
 
-from .connection import Connection
+from .mysqldb import Connection
 
 CONNECTION_POOL_LOCK = threading.RLock()
 CNX_POOL_MAXSIZE = 32
 
 
-class PoolError(pymysql.Error):
+class PoolError(MySQLdb.Error):
     pass
 
 
 class Pool(object):
 
-    def __init__(self, size=5, **kwargs):
+    def __init__(self, size=5, cnx_class=Connection, **kwargs):
         self.size = size
         self._cnx_config = {}
         self._cnx_queue = queue.Queue(self._pool_size)
@@ -109,7 +109,7 @@ class Pool(object):
                     return cnt
                 except PoolError:
                     raise
-                except pymysql.Error:
+                except MySQLdb.Error:
                     pass
 
             return cnt

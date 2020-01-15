@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 import time
 import pprint
-import pymysql
-from sqlalchemy import create_engine, exc, inspect, text
 
 import torndb
 
 st = time.time()
 
 
-db = torndb.Connection(host='localhost', database='blog',
-                       user='blog', password='blog')
+db = torndb.Connection(host='localhost', database='blog', user='blog', password='blog')
 
 # ret = db.insert("INSERT INTO authors (email, name, hashed_password) VALUES (%s, %s, %s)",
 #                 "baixue7@sohu.com", 'baixue7', '123456')
