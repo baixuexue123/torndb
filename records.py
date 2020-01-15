@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import os
 from collections import OrderedDict
 from inspect import isclass
-
-DATABASE_URL = os.environ.get('DATABASE_URL')
 
 
 def is_exception(obj):

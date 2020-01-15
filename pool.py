@@ -1,9 +1,12 @@
 import threading
 import queue
 
-import MySQLdb
+try:
+    import MySQLdb
+except ImportError:
+    import pymysql
+    pymysql.install_as_MySQLdb()
 
-from .mysqldb import Connection
 
 CONNECTION_POOL_LOCK = threading.RLock()
 CNX_POOL_MAXSIZE = 32
@@ -15,8 +18,9 @@ class PoolError(MySQLdb.Error):
 
 class Pool(object):
 
-    def __init__(self, size=5, cnx_class=Connection, **kwargs):
+    def __init__(self, size=5, cnx_class=None, **kwargs):
         self.size = size
+        self.cnx_class = cnx_class
         self._cnx_config = {}
         self._cnx_queue = queue.Queue(self._pool_size)
 
@@ -48,7 +52,7 @@ class Pool(object):
 
         with CONNECTION_POOL_LOCK:
             try:
-                with Connection(**kwargs) as c:
+                with self.cnx_class(**kwargs) as c:
                     c.ping()
                 self._cnx_config = kwargs
             except Exception as err:
@@ -57,7 +61,7 @@ class Pool(object):
     def _queue_connection(self, cnx):
         """Put connection back in the queue
         """
-        if not isinstance(cnx, Connection):
+        if not isinstance(cnx, self.cnx_class):
             raise PoolError("Connection instance not subclass of Connection.")
 
         try:
@@ -76,9 +80,9 @@ class Pool(object):
                 raise PoolError("Failed adding connection; queue is full")
 
             if not cnx:
-                cnx = Connection(**self._cnx_config)
+                cnx = self.cnx_class(**self._cnx_config)
             else:
-                if not isinstance(cnx, Connection):
+                if not isinstance(cnx, self.cnx_class):
                     raise PoolError("Connection instance not subclass of Connection.")
 
             self._queue_connection(cnx)
